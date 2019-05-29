@@ -119,6 +119,34 @@ do_configure() {
         --verbose
 }
 
+do_configure_prepend_class-target() {
+   ghc_version=$(ghc-pkg --version)
+    ghc_version=${ghc_version##* }
+    for pkgconf in ${STAGING_LIBDIR}/ghc-${ghc_version}/package.conf.d/*.conf; do
+        if [ -f "${pkgconf}" ]; then
+            sed -e "s| /usr/lib| ${STAGING_LIBDIR}|" \
+                -e "s| /usr/include| ${STAGING_INCDIR}|" \
+                $pkgconf | \
+            ghc-pkg -f "${GHC_PACKAGE_DATABASE}" --force update -
+        fi
+    done
+    ghc-pkg -f "${GHC_PACKAGE_DATABASE}" recache
+}
+
+do_configure_prepend_class-native() {
+    ghc_version=$(ghc-pkg --version)
+    ghc_version=${ghc_version##* }
+    for pkgconf in ${STAGING_LIBDIR_NATIVE}/ghc-${ghc_version}/package.conf.d/*.conf; do
+        if [ -f "${pkgconf}" ]; then
+            sed -e "s| /usr/lib| ${STAGING_LIBDIR_NATIVE}|" \
+                -e "s| /usr/include| ${STAGING_INCDIR_NATIVE}|" \
+                $pkgconf | \
+            ghc-pkg -f "${GHC_PACKAGE_DATABASE}" --force update -
+        fi
+    done
+    ghc-pkg -f "${GHC_PACKAGE_DATABASE}" recache
+}
+
 do_compile() {
     ${RUNGHC} Setup.*hs build \
         --ghc-options='-dynload sysdep
